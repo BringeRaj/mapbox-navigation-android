@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.models.BannerInstructions;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
@@ -157,7 +158,7 @@ public class NavigationViewModel extends AndroidViewModel {
 
   /**
    * Returns the current instance of {@link MapboxNavigation}.
-   *
+   * <p>
    * Will be null if navigation has not been initialized.
    */
   @Nullable
@@ -183,8 +184,8 @@ public class NavigationViewModel extends AndroidViewModel {
     initializeTimeFormat(navigationOptions);
     initializeNavigationSpeechPlayer(options);
     if (!isRunning) {
-      locationEngineConductor.initializeLocationEngine(getApplication(), options.shouldSimulateRoute());
-      initializeNavigation(getApplication(), navigationOptions);
+      LocationEngine locationEngine = initializeLocationEngineFrom(options);
+      initializeNavigation(getApplication(), navigationOptions, locationEngine);
       addMilestones(options);
       navigationViewRouteEngine.extractRouteOptions(options);
     }
@@ -254,9 +255,18 @@ public class NavigationViewModel extends AndroidViewModel {
     return new SpeechPlayerProvider(getApplication(), language, voiceLanguageSupported, accessToken);
   }
 
-  private void initializeNavigation(Context context, MapboxNavigationOptions options) {
+  private LocationEngine initializeLocationEngineFrom(NavigationViewOptions options) {
+    LocationEngine locationEngine = options.locationEngine();
+    if (locationEngine == null) {
+      locationEngineConductor.initializeLocationEngine(getApplication(), options.shouldSimulateRoute());
+      locationEngine = locationEngineConductor.obtainLocationEngine();
+    }
+    return locationEngine;
+  }
+
+  private void initializeNavigation(Context context, MapboxNavigationOptions options, LocationEngine locationEngine) {
     navigation = new MapboxNavigation(context, accessToken, options);
-    navigation.setLocationEngine(locationEngineConductor.obtainLocationEngine());
+    navigation.setLocationEngine(locationEngine);
     addNavigationListeners();
   }
 
