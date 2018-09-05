@@ -8,12 +8,11 @@ import com.mapbox.api.directions.v5.models.RouteLeg;
 import com.mapbox.api.directions.v5.models.StepIntersection;
 import com.mapbox.geojson.Point;
 import com.mapbox.navigator.NavigationStatus;
-import com.mapbox.navigator.Navigator;
+import com.mapbox.navigator.VoiceInstruction;
 import com.mapbox.services.android.navigation.v5.routeprogress.CurrentLegAnnotation;
 import com.mapbox.services.android.navigation.v5.routeprogress.RouteProgress;
 import com.mapbox.services.android.navigation.v5.utils.RingBuffer;
 
-import java.util.Date;
 import java.util.List;
 
 import static com.mapbox.services.android.navigation.v5.navigation.NavigationHelper.createCurrentAnnotation;
@@ -28,7 +27,6 @@ class NavigationRouteProcessor {
 
   private static final int ONE_INDEX = 1;
   private final RingBuffer<RouteProgress> previousProgressList = new RingBuffer<>(2);
-  private final Navigator navigator;
   private DirectionsRoute route;
   private RouteLeg currentLeg;
   private LegStep currentStep;
@@ -39,14 +37,9 @@ class NavigationRouteProcessor {
   private List<Pair<StepIntersection, Double>> currentIntersectionDistances;
   private CurrentLegAnnotation currentLegAnnotation;
 
-  NavigationRouteProcessor(Navigator navigator) {
-    this.navigator = navigator;
-  }
-
-  RouteProgress buildNewRouteProgress(Date date, DirectionsRoute route) {
-    NavigationStatus status = navigator.getStatus(date);
+  RouteProgress buildNewRouteProgress(NavigationStatus status, DirectionsRoute route) {
     updateRoute(route);
-    return buildRouteProgressWith(status);
+    return buildRouteProgressFrom(status);
   }
 
   RouteProgress retrievePreviousRouteProgress() {
@@ -59,20 +52,19 @@ class NavigationRouteProcessor {
     }
   }
 
-  private RouteProgress buildRouteProgressWith(NavigationStatus status) {
+  private RouteProgress buildRouteProgressFrom(NavigationStatus status) {
     int legIndex = status.getLegIndex();
     int stepIndex = status.getStepIndex();
     int upcomingStepIndex = stepIndex + ONE_INDEX;
-    double stepDistanceRemaining = status.getRemainingStepDistance();
     updateSteps(route, legIndex, stepIndex, upcomingStepIndex);
     updateStepPoints(route, legIndex, stepIndex, upcomingStepIndex);
     updateIntersections();
 
     double legDistanceRemaining = status.getRemainingLegDistance();
     double routeDistanceRemaining = routeDistanceRemaining(legDistanceRemaining, legIndex, route);
+    double stepDistanceRemaining = status.getRemainingStepDistance();
     double stepDistanceTraveled = currentStep.distance() - stepDistanceRemaining;
     currentLegAnnotation = createCurrentAnnotation(currentLegAnnotation, currentLeg, legDistanceRemaining);
-
     StepIntersection currentIntersection = findCurrentIntersection(
       currentIntersections, currentIntersectionDistances, stepDistanceTraveled
     );
@@ -96,8 +88,8 @@ class NavigationRouteProcessor {
       .currentLegAnnotation(currentLegAnnotation)
       .inTunnel(status.getInTunnel());
 
-    // TODO voice banner "current" in RouteProgress
-
+    // TODO build banner instructions from status here
+    addVoiceInstructions(status, progressBuilder);
     addUpcomingStepPoints(progressBuilder);
     RouteProgress routeProgress = progressBuilder.build();
     previousProgressList.add(routeProgress);
@@ -124,6 +116,14 @@ class NavigationRouteProcessor {
   private void addUpcomingStepPoints(RouteProgress.Builder progressBuilder) {
     if (upcomingStepPoints != null && !upcomingStepPoints.isEmpty()) {
       progressBuilder.upcomingStepPoints(upcomingStepPoints);
+    }
+  }
+
+  private void addVoiceInstructions(NavigationStatus status, RouteProgress.Builder progressBuilder) {
+    VoiceInstruction voiceInstruction = status.getVoiceInstruction();
+    if (voiceInstruction != null) {
+      progressBuilder.currentAnnouncement(voiceInstruction.getAnnouncement());
+      progressBuilder.currentSsmlAnnouncement(voiceInstruction.getSsmlAnnouncement());
     }
   }
 }
