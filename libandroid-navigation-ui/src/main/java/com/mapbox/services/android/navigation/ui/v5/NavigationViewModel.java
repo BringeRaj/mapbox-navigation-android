@@ -58,7 +58,6 @@ public class NavigationViewModel extends AndroidViewModel {
   public final MutableLiveData<BannerInstructionModel> bannerInstructionModel = new MutableLiveData<>();
   public final MutableLiveData<SummaryModel> summaryModel = new MutableLiveData<>();
   public final MutableLiveData<Boolean> isOffRoute = new MutableLiveData<>();
-  public final MutableLiveData<Boolean> isFeedbackShowing = new MutableLiveData<>();
   final MutableLiveData<Location> navigationLocation = new MutableLiveData<>();
   final MutableLiveData<DirectionsRoute> route = new MutableLiveData<>();
   final MutableLiveData<Point> destination = new MutableLiveData<>();
@@ -148,7 +147,6 @@ public class NavigationViewModel extends AndroidViewModel {
    */
   public void cancelFeedback() {
     if (!TextUtils.isEmpty(feedbackId)) {
-      isFeedbackShowing.setValue(false);
       navigation.cancelFeedback(feedbackId);
       feedbackId = null;
     }

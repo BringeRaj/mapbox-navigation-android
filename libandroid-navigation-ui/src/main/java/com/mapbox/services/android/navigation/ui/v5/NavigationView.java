@@ -415,6 +415,24 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
     return navigationViewModel.retrieveNavigation();
   }
 
+  /**
+   * Returns the sound button used for muting instructions
+   *
+   * @return sound button
+   */
+  public NavigationButton retrieveSoundButton() {
+    return instructionView.retrieveSoundButton();
+  }
+
+  /**
+   * Returns the feedback button for sending feedback about the maps
+   *
+   * @return feedback button
+   */
+  public NavigationButton retrieveFeedbackButton() {
+    return instructionView.retrieveFeedbackButton();
+  }
+
   private void initializeView() {
     inflate(getContext(), R.layout.navigation_view_layout, this);
     bind();
@@ -546,12 +564,6 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
 
     establishDistanceFormatter(localeUtils, options);
     establishTimeFormat(options);
-    setupInstructionView(options);
-  }
-
-  private void setupInstructionView(NavigationViewOptions options) {
-    instructionView.setupHiddenViews(options.showFeedbackFab(), options.showSoundFab(), options.showProblemAlertView(),
-      options.showFeedbackSubmittedAlertView());
   }
 
   private void establishDistanceFormatter(LocaleUtils localeUtils, NavigationViewOptions options) {

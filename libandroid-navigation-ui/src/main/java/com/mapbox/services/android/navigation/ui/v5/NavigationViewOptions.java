@@ -73,14 +73,6 @@ public abstract class NavigationViewOptions extends NavigationUiOptions {
 
     public abstract Builder waynameChipEnabled(boolean waynameChipEnabled);
 
-    public abstract Builder showFeedbackFab(boolean showFeedbackFab);
-
-    public abstract Builder showSoundFab(boolean showSoundFab);
-
-    public abstract Builder showProblemAlertView(boolean showProblemAlertView);
-
-    public abstract Builder showFeedbackSubmittedAlertView(boolean showFeedbackSubmittedAlertView);
-
     public abstract Builder navigationOptions(MapboxNavigationOptions navigationOptions);
 
     public abstract Builder feedbackListener(FeedbackListener feedbackListener);
@@ -112,10 +104,6 @@ public abstract class NavigationViewOptions extends NavigationUiOptions {
     return new AutoValue_NavigationViewOptions.Builder()
       .navigationOptions(MapboxNavigationOptions.builder().build())
       .shouldSimulateRoute(false)
-      .waynameChipEnabled(true)
-      .showFeedbackFab(true)
-      .showSoundFab(true)
-      .showProblemAlertView(true)
-      .showFeedbackSubmittedAlertView(true);
+      .waynameChipEnabled(true);
   }
 }
