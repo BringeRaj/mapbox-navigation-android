@@ -433,6 +433,10 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
     return instructionView.retrieveFeedbackButton();
   }
 
+  public NavigationButton retrieveRecenterButton() {
+    return recenterBtn;
+  }
+
   private void initializeView() {
     inflate(getContext(), R.layout.navigation_view_layout, this);
     bind();
@@ -550,7 +554,7 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
 
   private void initializeClickListeners() {
     cancelBtn.setOnClickListener(new CancelBtnClickListener(navigationViewEventDispatcher));
-    recenterBtn.setOnClickListener(new RecenterBtnClickListener(navigationPresenter));
+    recenterBtn.addOnClickListener(new RecenterBtnClickListener(navigationPresenter));
     routeOverviewBtn.setOnClickListener(new RouteOverviewBtnClickListener(navigationPresenter));
   }
 
