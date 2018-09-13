@@ -35,6 +35,7 @@ import com.mapbox.services.android.navigation.v5.route.FasterRoute;
 import com.mapbox.services.android.navigation.v5.route.FasterRouteListener;
 import com.mapbox.services.android.navigation.v5.routeprogress.ProgressChangeListener;
 import com.mapbox.services.android.navigation.v5.snap.Snap;
+import com.mapbox.services.android.navigation.v5.utils.ValidationUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -475,6 +476,10 @@ public class MapboxNavigation implements ServiceConnection {
       0f, 0f, 0f, 0f,
       "mapbox_navigation"
     );
+  }
+
+  public void setOffline(String tileFilePath, String translationsDirPath) {
+    initializeOfflineData(tileFilePath, translationsDirPath);
   }
 
   /**

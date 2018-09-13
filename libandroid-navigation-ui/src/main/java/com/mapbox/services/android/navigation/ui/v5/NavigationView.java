@@ -415,6 +415,14 @@ public class NavigationView extends CoordinatorLayout implements LifecycleObserv
     return navigationViewModel.retrieveNavigation();
   }
 
+  public void initializeOfflineData(String tileFilePath, String translationsDirPath) {
+    navigationViewModel.initializeOfflineData(tileFilePath, translationsDirPath);
+  }
+
+  public void setOffline(boolean isOffline) {
+    navigationViewModel.setOffline(isOffline);
+  }
+
   private void initializeView() {
     inflate(getContext(), R.layout.navigation_view_layout, this);
     bind();

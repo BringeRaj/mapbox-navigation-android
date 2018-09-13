@@ -48,6 +48,7 @@ import com.mapbox.services.android.navigation.v5.utils.DistanceFormatter;
 import com.mapbox.services.android.navigation.v5.utils.LocaleUtils;
 import com.mapbox.services.android.navigation.v5.utils.RouteUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NavigationViewModel extends AndroidViewModel {
@@ -65,7 +66,7 @@ public class NavigationViewModel extends AndroidViewModel {
   final MutableLiveData<Boolean> shouldRecordScreenshot = new MutableLiveData<>();
 
   private MapboxNavigation navigation;
-  private ViewRouteFetcher navigationViewRouteEngine;
+  private ViewRouteFetcher viewRouteFetcher;
   private LocationEngineConductor locationEngineConductor;
   private NavigationViewEventDispatcher navigationViewEventDispatcher;
   private SpeechPlayer speechPlayer;
@@ -81,6 +82,7 @@ public class NavigationViewModel extends AndroidViewModel {
   private LocaleUtils localeUtils;
   private String accessToken;
   private DistanceFormatter distanceFormatter;
+  private boolean isOffline;
 
   public NavigationViewModel(Application application) {
     super(application);
@@ -164,6 +166,14 @@ public class NavigationViewModel extends AndroidViewModel {
     return navigation;
   }
 
+  public void initializeOfflineData(String tileFilePath, String translationsDirPath) {
+    navigation.initializeOfflineData(tileFilePath, translationsDirPath);
+  }
+
+  public void setOffline(boolean isOffline) {
+    this.isOffline = isOffline;
+  }
+
   void initializeEventDispatcher(NavigationViewEventDispatcher navigationViewEventDispatcher) {
     this.navigationViewEventDispatcher = navigationViewEventDispatcher;
   }
@@ -186,7 +196,7 @@ public class NavigationViewModel extends AndroidViewModel {
       initializeNavigation(getApplication(), navigationOptions);
       addMilestones(options);
     }
-    navigationViewRouteEngine.extractRouteOptions(options);
+    viewRouteFetcher.extractRouteOptions(options);
     return navigation;
   }
 
@@ -210,7 +220,7 @@ public class NavigationViewModel extends AndroidViewModel {
   }
 
   private void initializeNavigationRouteEngine() {
-    navigationViewRouteEngine = new ViewRouteFetcher(getApplication(), accessToken, routeEngineListener);
+    viewRouteFetcher = new ViewRouteFetcher(getApplication(), accessToken, routeEngineListener);
   }
 
   private void initializeNavigationLocationEngine() {
@@ -301,8 +311,7 @@ public class NavigationViewModel extends AndroidViewModel {
     public void userOffRoute(Location location) {
       if (hasNetworkConnection()) {
         speechPlayer.onOffRoute();
-        Point newOrigin = Point.fromLngLat(location.getLongitude(), location.getLatitude());
-        handleOffRouteEvent(newOrigin);
+        handleOffRouteEvent(location);
       }
     }
   };
@@ -354,7 +363,7 @@ public class NavigationViewModel extends AndroidViewModel {
   private LocationEngineConductorListener locationEngineCallback = new LocationEngineConductorListener() {
     @Override
     public void onLocationUpdate(Location location) {
-      navigationViewRouteEngine.updateRawLocation(location);
+      viewRouteFetcher.updateRawLocation(location);
     }
   };
 
@@ -443,11 +452,19 @@ public class NavigationViewModel extends AndroidViewModel {
     }
   }
 
-  private void handleOffRouteEvent(Point newOrigin) {
+  private void handleOffRouteEvent(Location location) {
+    Point newOrigin = Point.fromLngLat(location.getLongitude(), location.getLatitude());
     if (navigationViewEventDispatcher != null && navigationViewEventDispatcher.allowRerouteFrom(newOrigin)) {
       navigationViewEventDispatcher.onOffRoute(newOrigin);
       OffRouteEvent event = new OffRouteEvent(newOrigin, routeProgress);
-      navigationViewRouteEngine.fetchRouteFromOffRouteEvent(event);
+
+      if (isOffline) {
+        ArrayList<Point> locations = viewRouteFetcher.calculateRemainingCoordinates(event);
+        navigation.findOfflineRouteFor(location, locations);
+      } else {
+        viewRouteFetcher.fetchRouteFromOffRouteEvent(event);
+      }
+
       isOffRoute.setValue(true);
     }
   }
